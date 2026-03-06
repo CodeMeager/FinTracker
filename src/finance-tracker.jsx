@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const categories = {
   expense: ["Еда", "Транспорт", "Жильё", "Здоровье", "Развлечения", "Одежда", "Другое"],
   income: ["Зарплата", "Фриланс", "Инвестиции", "Подарок", "Другое"],
 };
+
+const MAX_AMOUNT = 999_999_999; // 9 цифр — разумный потолок
 
 const formatAmount = (n) =>
   n.toLocaleString("ru-RU", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -12,21 +14,54 @@ export default function App() {
   const [type, setType] = useState("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState(categories.expense[0]);
+  const [customCategory, setCustomCategory] = useState("");
   const [expenses, setExpenses] = useState([]);
   const [incomes, setIncomes] = useState([]);
+  const [amountError, setAmountError] = useState("");
+  const submitting = useRef(false); // защита от двойного клика
 
   const handleTypeSwitch = (t) => {
     setType(t);
     setCategory(categories[t][0]);
+    setCustomCategory("");
+    setAmountError("");
+  };
+
+  const handleAmountChange = (e) => {
+    const raw = e.target.value;
+    // Не даём ввести отрицательный знак напрямую
+    if (raw.startsWith("-")) return;
+    setAmount(raw);
+    setAmountError("");
   };
 
   const handleSubmit = () => {
+    if (submitting.current) return; // блокируем двойной клик
+
     const val = parseFloat(amount.replace(",", "."));
-    if (!val || val <= 0) return;
-    const entry = { amount: val, category, id: Date.now() };
+
+    if (!amount || isNaN(val) || val <= 0) {
+      setAmountError("Введите сумму больше 0");
+      return;
+    }
+    if (val > MAX_AMOUNT) {
+      setAmountError(`Максимум ${formatAmount(MAX_AMOUNT)} ₽`);
+      return;
+    }
+
+    const resolvedCategory = category === "Другое" && customCategory.trim()
+      ? customCategory.trim()
+      : category;
+
+    submitting.current = true;
+    const entry = { amount: val, category: resolvedCategory, id: Date.now() };
     if (type === "expense") setExpenses((p) => [entry, ...p]);
     else setIncomes((p) => [entry, ...p]);
     setAmount("");
+    setCustomCategory("");
+    setAmountError("");
+    // Сброс блокировки после небольшой задержки
+    setTimeout(() => { submitting.current = false; }, 300);
   };
 
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
@@ -92,14 +127,16 @@ export default function App() {
         <div style={styles.inputGroup}>
           <label style={styles.label}>Сумма, ₽</label>
           <input
-            style={styles.input}
+            style={{ ...styles.input, ...(amountError ? styles.inputError : {}) }}
             type="number"
-            min="0"
+            min="0.01"
+            max={MAX_AMOUNT}
             placeholder="0"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={handleAmountChange}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           />
+          {amountError && <span style={styles.errorText}>{amountError}</span>}
         </div>
 
         {/* Category */}
@@ -110,12 +147,24 @@ export default function App() {
               <button
                 key={c}
                 style={{ ...styles.chip, ...(category === c ? styles.chipActive : {}) }}
-                onClick={() => setCategory(c)}
+                onClick={() => { setCategory(c); if (c !== "Другое") setCustomCategory(""); }}
               >
                 {c}
               </button>
             ))}
           </div>
+          {category === "Другое" && (
+            <input
+              style={styles.customInput}
+              type="text"
+              placeholder="Название категории"
+              maxLength={32}
+              value={customCategory}
+              onChange={(e) => setCustomCategory(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+              autoFocus
+            />
+          )}
         </div>
 
         <button style={styles.submitBtn} onClick={handleSubmit}>
@@ -289,6 +338,29 @@ const styles = {
     width: "100%",
     boxSizing: "border-box",
     letterSpacing: "-0.02em",
+  },
+  inputError: {
+    border: "1px solid #7f1d1d",
+  },
+  errorText: {
+    fontSize: 11,
+    color: "#f87171",
+    letterSpacing: "0.05em",
+    marginTop: 2,
+  },
+  customInput: {
+    marginTop: 8,
+    background: "#0a0a0a",
+    border: "1px solid #333",
+    borderRadius: 2,
+    color: "#e5e5e5",
+    fontSize: 13,
+    fontFamily: "inherit",
+    padding: "8px 12px",
+    outline: "none",
+    width: "100%",
+    boxSizing: "border-box",
+    letterSpacing: "0.02em",
   },
   chips: {
     display: "flex",
