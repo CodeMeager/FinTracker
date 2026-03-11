@@ -1,4 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+
+const load = (key) => {
+  try { return JSON.parse(localStorage.getItem(key)) || []; }
+  catch { return []; }
+};
 
 const categories = {
   expense: ["Еда", "Транспорт", "Жильё", "Здоровье", "Развлечения", "Одежда", "Другое"],
@@ -23,10 +28,13 @@ export default function App() {
   const [rawAmount, setRawAmount] = useState("");
   const [category, setCategory] = useState(categories.expense[0]);
   const [customCategory, setCustomCategory] = useState("");
-  const [expenses, setExpenses] = useState([]);
-  const [incomes, setIncomes] = useState([]);
+  const [expenses, setExpenses] = useState(() => load("expenses"));
+  const [incomes, setIncomes] = useState(() => load("incomes"));
   const [amountError, setAmountError] = useState("");
   const submitting = useRef(false);
+
+  useEffect(() => { localStorage.setItem("expenses", JSON.stringify(expenses)); }, [expenses]);
+  useEffect(() => { localStorage.setItem("incomes", JSON.stringify(incomes)); }, [incomes]);
 
   const handleTypeSwitch = (t) => {
     setType(t);
@@ -75,7 +83,7 @@ export default function App() {
   return (
     <div style={styles.root}>
       <div style={styles.header}>
-        <span style={styles.logo}>₽ финансы</span>
+        <span style={styles.logo}>Финансы</span>
       </div>
 
       <div style={styles.summaryRow}>
@@ -190,77 +198,78 @@ export default function App() {
 const styles = {
   root: {
     minHeight: "100vh",
-    background: "#0a0a0a",
-    color: "#e5e5e5",
-    fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+    background: "#09090b",
+    color: "#f4f4f5",
+    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    padding: "24px 16px 48px",
-    gap: "24px",
+    padding: "32px 16px 64px",
+    gap: "16px",
   },
-  header: { width: "100%", maxWidth: 680, display: "flex", justifyContent: "flex-start" },
-  logo: { fontSize: 13, letterSpacing: "0.15em", color: "#555", textTransform: "uppercase" },
+  header: { width: "100%", maxWidth: 680, display: "flex", justifyContent: "flex-start", alignItems: "center" },
+  logo: { fontSize: 16, fontWeight: 700, color: "#f4f4f5", letterSpacing: "-0.02em" },
   summaryRow: {
-    width: "100%", maxWidth: 680, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12,
+    width: "100%", maxWidth: 680, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10,
   },
   summaryCard: {
-    borderRadius: 2, padding: "16px 18px", display: "flex", flexDirection: "column",
-    gap: 6, minHeight: 160, border: "1px solid",
+    borderRadius: 16, padding: "20px 22px", display: "flex", flexDirection: "column",
+    gap: 6, minHeight: 180, border: "1px solid",
   },
-  expenseCard: { background: "#110e0e", borderColor: "#2a1a1a" },
-  incomeCard: { background: "#0b110e", borderColor: "#1a2a1e" },
-  summaryLabel: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#555" },
-  summaryAmount: { fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: "#e5e5e5", marginBottom: 8 },
-  entryList: { display: "flex", flexDirection: "column", gap: 3, overflowY: "auto", maxHeight: 160 },
-  entryRow: { display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "#888" },
-  entryCategory: { color: "#666", fontSize: 11 },
-  entryAmt: { color: "#f87171", fontVariantNumeric: "tabular-nums" },
-  empty: { fontSize: 11, color: "#333" },
+  expenseCard: { background: "#180a0a", borderColor: "#3f1212" },
+  incomeCard: { background: "#0a1810", borderColor: "#123f1a" },
+  summaryLabel: { fontSize: 11, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase", color: "#71717a" },
+  summaryAmount: { fontSize: 24, fontWeight: 700, letterSpacing: "-0.03em", color: "#f4f4f5", marginBottom: 8 },
+  entryList: { display: "flex", flexDirection: "column", gap: 4, overflowY: "auto", maxHeight: 160 },
+  entryRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 0", borderBottom: "1px solid #ffffff08" },
+  entryCategory: { color: "#71717a", fontSize: 12, fontWeight: 400 },
+  entryAmt: { color: "#f87171", fontVariantNumeric: "tabular-nums", fontSize: 13, fontWeight: 500 },
+  empty: { fontSize: 12, color: "#3f3f46" },
   form: {
-    width: "100%", maxWidth: 680, background: "#111", border: "1px solid #1e1e1e",
-    borderRadius: 2, padding: "24px", display: "flex", flexDirection: "column", gap: 20,
+    width: "100%", maxWidth: 680, background: "#18181b", border: "1px solid #27272a",
+    borderRadius: 16, padding: "28px", display: "flex", flexDirection: "column", gap: 22,
   },
   toggle: {
-    display: "flex", gap: 0, background: "#0a0a0a", border: "1px solid #1e1e1e",
-    borderRadius: 2, overflow: "hidden", width: "fit-content",
+    display: "flex", gap: 4, background: "#09090b", border: "1px solid #27272a",
+    borderRadius: 12, padding: 4, width: "fit-content",
   },
   toggleBtn: {
-    background: "transparent", border: "none", color: "#555", fontSize: 12,
-    letterSpacing: "0.1em", textTransform: "uppercase", padding: "8px 20px",
-    cursor: "pointer", transition: "all 0.15s",
+    background: "transparent", border: "none", color: "#71717a", fontSize: 13,
+    fontWeight: 500, padding: "7px 20px", borderRadius: 9,
+    cursor: "pointer", transition: "all 0.15s", fontFamily: "inherit",
   },
-  toggleActive: { background: "#2a1a1a", color: "#f87171" },
-  toggleActiveIncome: { background: "#1a2a1e", color: "#4ade80" },
+  toggleActive: { background: "#3f1212", color: "#f87171" },
+  toggleActiveIncome: { background: "#12401a", color: "#4ade80" },
   inputGroup: { display: "flex", flexDirection: "column", gap: 8 },
-  label: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#555" },
+  label: { fontSize: 11, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase", color: "#71717a" },
   input: {
-    background: "#0a0a0a", border: "1px solid #222", borderRadius: 2, color: "#e5e5e5",
-    fontSize: 28, fontFamily: "inherit", fontWeight: 700, padding: "10px 14px",
-    outline: "none", width: "100%", boxSizing: "border-box", letterSpacing: "-0.02em",
+    background: "#09090b", border: "1px solid #27272a", borderRadius: 10, color: "#f4f4f5",
+    fontSize: 30, fontFamily: "inherit", fontWeight: 700, padding: "12px 16px",
+    outline: "none", width: "100%", boxSizing: "border-box", letterSpacing: "-0.03em",
   },
   inputError: { border: "1px solid #7f1d1d" },
-  errorText: { fontSize: 11, color: "#f87171", letterSpacing: "0.05em", marginTop: 2 },
+  errorText: { fontSize: 12, color: "#f87171", marginTop: 2 },
   customInput: {
-    marginTop: 8, background: "#0a0a0a", border: "1px solid #333", borderRadius: 2,
-    color: "#e5e5e5", fontSize: 13, fontFamily: "inherit", padding: "8px 12px",
-    outline: "none", width: "100%", boxSizing: "border-box", letterSpacing: "0.02em",
+    marginTop: 6, background: "#09090b", border: "1px solid #27272a", borderRadius: 10,
+    color: "#f4f4f5", fontSize: 14, fontFamily: "inherit", padding: "10px 14px",
+    outline: "none", width: "100%", boxSizing: "border-box",
   },
   chips: { display: "flex", flexWrap: "wrap", gap: 6 },
   chip: {
-    background: "transparent", border: "1px solid #222", borderRadius: 2, color: "#666",
-    fontSize: 11, letterSpacing: "0.05em", padding: "5px 12px", cursor: "pointer", transition: "all 0.1s",
+    background: "transparent", border: "1px solid #27272a", borderRadius: 20, color: "#71717a",
+    fontSize: 12, fontWeight: 500, padding: "6px 14px", cursor: "pointer",
+    transition: "all 0.12s", fontFamily: "inherit",
   },
-  chipActive: { border: "1px solid #555", color: "#e5e5e5", background: "#1a1a1a" },
+  chipActive: { border: "1px solid #52525b", color: "#f4f4f5", background: "#27272a" },
   submitBtn: {
-    background: "#e5e5e5", color: "#0a0a0a", border: "none", borderRadius: 2,
-    fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase",
-    fontFamily: "inherit", fontWeight: 700, padding: "14px", cursor: "pointer", transition: "opacity 0.15s",
+    background: "#f4f4f5", color: "#09090b", border: "none", borderRadius: 10,
+    fontSize: 14, fontWeight: 600, fontFamily: "inherit",
+    padding: "14px", cursor: "pointer", transition: "opacity 0.15s",
   },
   balance: {
-    width: "100%", maxWidth: 680, display: "flex", justifyContent: "space-between",
-    alignItems: "baseline", padding: "0 2px",
+    width: "100%", maxWidth: 680, background: "#18181b", border: "1px solid #27272a",
+    borderRadius: 16, padding: "20px 24px", display: "flex", justifyContent: "space-between", alignItems: "center",
   },
-  balanceLabel: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#555" },
-  balanceValue: { fontSize: 32, fontWeight: 700, letterSpacing: "-0.03em" },
+  balanceLabel: { fontSize: 11, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase", color: "#71717a" },
+  balanceValue: { fontSize: 32, fontWeight: 700, letterSpacing: "-0.04em" },
 };
