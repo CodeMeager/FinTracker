@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const categories = {
   expense: ["Еда", "Транспорт", "Жильё", "Здоровье", "Развлечения", "Одежда", "Другое"],
@@ -23,9 +23,16 @@ export default function App() {
   const [rawAmount, setRawAmount] = useState("");
   const [category, setCategory] = useState(categories.expense[0]);
   const [customCategory, setCustomCategory] = useState("");
-  const [expenses, setExpenses] = useState([]);
-  const [incomes, setIncomes] = useState([]);
+  const [expenses, setExpenses] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("expenses")) || []; } catch { return []; }
+  });
+  const [incomes, setIncomes] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("incomes")) || []; } catch { return []; }
+  });
   const [amountError, setAmountError] = useState("");
+
+    useEffect(() => { localStorage.setItem("expenses", JSON.stringify(expenses)); }, [expenses]);
+  useEffect(() => { localStorage.setItem("incomes", JSON.stringify(incomes)); }, [incomes]);
   const submitting = useRef(false);
 
   const handleTypeSwitch = (t) => {
@@ -78,12 +85,30 @@ export default function App() {
         <span style={styles.logo}>₽ финансы</span>
       </div>
 
+      <div style={styles.balanceCard}>
+        <span style={styles.balanceLabel}>Баланс</span>
+        <span
+          style={{
+            ...styles.balanceValue,
+            color: totalIncomes - totalExpenses >= 0 ? "#4ade80" : "#f87171",
+          }}
+        >
+          {formatAmount(totalIncomes - totalExpenses)} ₽
+        </span>
+      </div>
+
       <div style={styles.summaryRow}>
         <div style={{ ...styles.summaryCard, ...styles.expenseCard }}>
-          <span style={styles.summaryLabel}>Расходы</span>
-          <span style={styles.summaryAmount}>−{formatAmount(totalExpenses)} ₽</span>
+          <div style={styles.summaryHeader}>
+            <span style={styles.summaryDot("#f87171")} />
+            <span style={styles.summaryLabel}>Расходы</span>
+          </div>
+          <span style={{ ...styles.summaryAmount, color: "#f87171" }}>
+            −{formatAmount(totalExpenses)} ₽
+          </span>
+          <div style={styles.divider} />
           <div style={styles.entryList}>
-            {expenses.length === 0 && <span style={styles.empty}>пусто</span>}
+            {expenses.length === 0 && <span style={styles.empty}>нет записей</span>}
             {expenses.map((e) => (
               <div key={e.id} style={styles.entryRow}>
                 <span style={styles.entryCategory}>{e.category}</span>
@@ -94,10 +119,16 @@ export default function App() {
         </div>
 
         <div style={{ ...styles.summaryCard, ...styles.incomeCard }}>
-          <span style={styles.summaryLabel}>Доходы</span>
-          <span style={styles.summaryAmount}>+{formatAmount(totalIncomes)} ₽</span>
+          <div style={styles.summaryHeader}>
+            <span style={styles.summaryDot("#4ade80")} />
+            <span style={styles.summaryLabel}>Доходы</span>
+          </div>
+          <span style={{ ...styles.summaryAmount, color: "#4ade80" }}>
+            +{formatAmount(totalIncomes)} ₽
+          </span>
+          <div style={styles.divider} />
           <div style={styles.entryList}>
-            {incomes.length === 0 && <span style={styles.empty}>пусто</span>}
+            {incomes.length === 0 && <span style={styles.empty}>нет записей</span>}
             {incomes.map((e) => (
               <div key={e.id} style={styles.entryRow}>
                 <span style={styles.entryCategory}>{e.category}</span>
@@ -168,20 +199,8 @@ export default function App() {
         </div>
 
         <button style={styles.submitBtn} onClick={handleSubmit}>
-          Подтвердить
+          Добавить
         </button>
-      </div>
-
-      <div style={styles.balance}>
-        <span style={styles.balanceLabel}>Свободно</span>
-        <span
-          style={{
-            ...styles.balanceValue,
-            color: totalIncomes - totalExpenses >= 0 ? "#4ade80" : "#f87171",
-          }}
-        >
-          {formatAmount(totalIncomes - totalExpenses)} ₽
-        </span>
       </div>
     </div>
   );
@@ -190,77 +209,119 @@ export default function App() {
 const styles = {
   root: {
     minHeight: "100vh",
-    background: "#0a0a0a",
+    background: "#09090b",
     color: "#e5e5e5",
-    fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    padding: "24px 16px 48px",
-    gap: "24px",
+    padding: "32px 16px 64px",
+    gap: "20px",
   },
   header: { width: "100%", maxWidth: 680, display: "flex", justifyContent: "flex-start" },
-  logo: { fontSize: 13, letterSpacing: "0.15em", color: "#555", textTransform: "uppercase" },
+  logo: {
+    fontSize: 13, fontWeight: 600, letterSpacing: "0.12em", color: "#525252",
+    textTransform: "uppercase",
+  },
+  balanceCard: {
+    width: "100%", maxWidth: 680, background: "#111113",
+    border: "1px solid #1c1c22", borderRadius: 16,
+    padding: "28px 28px 24px", display: "flex", flexDirection: "column",
+    alignItems: "center", gap: 4,
+  },
+  balanceLabel: {
+    fontSize: 11, fontWeight: 500, letterSpacing: "0.15em",
+    textTransform: "uppercase", color: "#525252",
+  },
+  balanceValue: {
+    fontSize: 40, fontWeight: 700, letterSpacing: "-0.03em",
+    fontFamily: "'Inter', sans-serif",
+  },
   summaryRow: {
     width: "100%", maxWidth: 680, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12,
   },
   summaryCard: {
-    borderRadius: 2, padding: "16px 18px", display: "flex", flexDirection: "column",
-    gap: 6, minHeight: 160, border: "1px solid",
+    borderRadius: 14, padding: "20px", display: "flex", flexDirection: "column",
+    gap: 4, minHeight: 160, border: "1px solid",
+    transition: "border-color 0.2s",
   },
-  expenseCard: { background: "#110e0e", borderColor: "#2a1a1a" },
-  incomeCard: { background: "#0b110e", borderColor: "#1a2a1e" },
-  summaryLabel: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#555" },
-  summaryAmount: { fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: "#e5e5e5", marginBottom: 8 },
-  entryList: { display: "flex", flexDirection: "column", gap: 3, overflowY: "auto", maxHeight: 160 },
-  entryRow: { display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "#888" },
-  entryCategory: { color: "#666", fontSize: 11 },
-  entryAmt: { color: "#f87171", fontVariantNumeric: "tabular-nums" },
-  empty: { fontSize: 11, color: "#333" },
+  expenseCard: { background: "#12100f", borderColor: "#231a1a" },
+  incomeCard: { background: "#0f1210", borderColor: "#1a231c" },
+  summaryHeader: { display: "flex", alignItems: "center", gap: 8, marginBottom: 2 },
+  summaryDot: (color) => ({
+    width: 8, height: 8, borderRadius: "50%", background: color,
+    display: "inline-block", opacity: 0.7,
+  }),
+  summaryLabel: {
+    fontSize: 11, fontWeight: 500, letterSpacing: "0.12em",
+    textTransform: "uppercase", color: "#525252",
+  },
+  summaryAmount: {
+    fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em",
+    marginBottom: 4,
+  },
+  divider: { height: 1, background: "#1a1a1f", margin: "8px 0" },
+  entryList: {
+    display: "flex", flexDirection: "column", gap: 6,
+    overflowY: "auto", maxHeight: 160, paddingRight: 4,
+  },
+  entryRow: {
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    fontSize: 13, color: "#888", padding: "4px 0",
+  },
+  entryCategory: { color: "#6b6b6b", fontSize: 12, fontWeight: 500 },
+  entryAmt: { color: "#f87171", fontVariantNumeric: "tabular-nums", fontWeight: 500 },
+  empty: { fontSize: 12, color: "#2a2a2a", fontStyle: "italic", padding: "8px 0" },
   form: {
-    width: "100%", maxWidth: 680, background: "#111", border: "1px solid #1e1e1e",
-    borderRadius: 2, padding: "24px", display: "flex", flexDirection: "column", gap: 20,
+    width: "100%", maxWidth: 680, background: "#111113",
+    border: "1px solid #1c1c22", borderRadius: 16,
+    padding: "28px", display: "flex", flexDirection: "column", gap: 22,
   },
   toggle: {
-    display: "flex", gap: 0, background: "#0a0a0a", border: "1px solid #1e1e1e",
-    borderRadius: 2, overflow: "hidden", width: "fit-content",
+    display: "flex", gap: 4, background: "#0c0c0e", border: "1px solid #1c1c22",
+    borderRadius: 10, overflow: "hidden", width: "fit-content", padding: 3,
   },
   toggleBtn: {
     background: "transparent", border: "none", color: "#555", fontSize: 12,
-    letterSpacing: "0.1em", textTransform: "uppercase", padding: "8px 20px",
+    fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase",
+    padding: "8px 22px", cursor: "pointer", transition: "all 0.2s",
+    borderRadius: 7,
+  },
+  toggleActive: { background: "#271a1a", color: "#f87171" },
+  toggleActiveIncome: { background: "#1a271e", color: "#4ade80" },
+  inputGroup: { display: "flex", flexDirection: "column", gap: 8 },
+  label: {
+    fontSize: 11, fontWeight: 500, letterSpacing: "0.12em",
+    textTransform: "uppercase", color: "#525252",
+  },
+  input: {
+    background: "#0c0c0e", border: "1px solid #1c1c22", borderRadius: 10,
+    color: "#e5e5e5", fontSize: 28, fontFamily: "'Inter', sans-serif",
+    fontWeight: 700, padding: "14px 18px", outline: "none",
+    width: "100%", boxSizing: "border-box", letterSpacing: "-0.02em",
+    transition: "border-color 0.2s",
+  },
+  inputError: { borderColor: "#7f1d1d" },
+  errorText: { fontSize: 12, color: "#f87171", fontWeight: 500, marginTop: 2 },
+  customInput: {
+    marginTop: 4, background: "#0c0c0e", border: "1px solid #1c1c22",
+    borderRadius: 10, color: "#e5e5e5", fontSize: 13, fontWeight: 500,
+    fontFamily: "inherit", padding: "10px 14px", outline: "none",
+    width: "100%", boxSizing: "border-box", transition: "border-color 0.2s",
+  },
+  chips: { display: "flex", flexWrap: "wrap", gap: 8 },
+  chip: {
+    background: "transparent", border: "1px solid #1c1c22", borderRadius: 20,
+    color: "#666", fontSize: 12, fontWeight: 500, padding: "7px 16px",
     cursor: "pointer", transition: "all 0.15s",
   },
-  toggleActive: { background: "#2a1a1a", color: "#f87171" },
-  toggleActiveIncome: { background: "#1a2a1e", color: "#4ade80" },
-  inputGroup: { display: "flex", flexDirection: "column", gap: 8 },
-  label: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#555" },
-  input: {
-    background: "#0a0a0a", border: "1px solid #222", borderRadius: 2, color: "#e5e5e5",
-    fontSize: 28, fontFamily: "inherit", fontWeight: 700, padding: "10px 14px",
-    outline: "none", width: "100%", boxSizing: "border-box", letterSpacing: "-0.02em",
+  chipActive: {
+    borderColor: "#444", color: "#e5e5e5", background: "#1a1a1f",
   },
-  inputError: { border: "1px solid #7f1d1d" },
-  errorText: { fontSize: 11, color: "#f87171", letterSpacing: "0.05em", marginTop: 2 },
-  customInput: {
-    marginTop: 8, background: "#0a0a0a", border: "1px solid #333", borderRadius: 2,
-    color: "#e5e5e5", fontSize: 13, fontFamily: "inherit", padding: "8px 12px",
-    outline: "none", width: "100%", boxSizing: "border-box", letterSpacing: "0.02em",
-  },
-  chips: { display: "flex", flexWrap: "wrap", gap: 6 },
-  chip: {
-    background: "transparent", border: "1px solid #222", borderRadius: 2, color: "#666",
-    fontSize: 11, letterSpacing: "0.05em", padding: "5px 12px", cursor: "pointer", transition: "all 0.1s",
-  },
-  chipActive: { border: "1px solid #555", color: "#e5e5e5", background: "#1a1a1a" },
   submitBtn: {
-    background: "#e5e5e5", color: "#0a0a0a", border: "none", borderRadius: 2,
-    fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase",
-    fontFamily: "inherit", fontWeight: 700, padding: "14px", cursor: "pointer", transition: "opacity 0.15s",
+    background: "linear-gradient(135deg, #e5e5e5, #c5c5c5)", color: "#0a0a0a",
+    border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600,
+    letterSpacing: "0.08em", textTransform: "uppercase",
+    padding: "15px", cursor: "pointer", transition: "all 0.2s",
   },
-  balance: {
-    width: "100%", maxWidth: 680, display: "flex", justifyContent: "space-between",
-    alignItems: "baseline", padding: "0 2px",
-  },
-  balanceLabel: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#555" },
-  balanceValue: { fontSize: 32, fontWeight: 700, letterSpacing: "-0.03em" },
 };
