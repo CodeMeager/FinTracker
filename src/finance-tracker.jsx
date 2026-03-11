@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const categories = {
   expense: ["Еда", "Транспорт", "Жильё", "Здоровье", "Развлечения", "Одежда", "Другое"],
@@ -23,10 +23,32 @@ export default function App() {
   const [rawAmount, setRawAmount] = useState("");
   const [category, setCategory] = useState(categories.expense[0]);
   const [customCategory, setCustomCategory] = useState("");
-  const [expenses, setExpenses] = useState([]);
-  const [incomes, setIncomes] = useState([]);
+  const [expenses, setExpenses] = useState(() => {
+    try {
+      const saved = localStorage.getItem("expenses");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [incomes, setIncomes] = useState(() => {
+    try {
+      const saved = localStorage.getItem("incomes");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [amountError, setAmountError] = useState("");
   const submitting = useRef(false);
+
+  useEffect(() => {
+    localStorage.setItem("expenses", JSON.stringify(expenses));
+  }, [expenses]);
+
+  useEffect(() => {
+    localStorage.setItem("incomes", JSON.stringify(incomes));
+  }, [incomes]);
 
   const handleTypeSwitch = (t) => {
     setType(t);
@@ -190,77 +212,84 @@ export default function App() {
 const styles = {
   root: {
     minHeight: "100vh",
-    background: "#0a0a0a",
+    background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)",
     color: "#e5e5e5",
     fontFamily: "'JetBrains Mono', 'Courier New', monospace",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    padding: "24px 16px 48px",
-    gap: "24px",
+    padding: "32px 16px 56px",
+    gap: "28px",
   },
   header: { width: "100%", maxWidth: 680, display: "flex", justifyContent: "flex-start" },
-  logo: { fontSize: 13, letterSpacing: "0.15em", color: "#555", textTransform: "uppercase" },
+  logo: { fontSize: 12, letterSpacing: "0.2em", color: "#888", textTransform: "uppercase", fontWeight: 600 },
   summaryRow: {
-    width: "100%", maxWidth: 680, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12,
+    width: "100%", maxWidth: 680, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16,
   },
   summaryCard: {
-    borderRadius: 2, padding: "16px 18px", display: "flex", flexDirection: "column",
-    gap: 6, minHeight: 160, border: "1px solid",
+    borderRadius: 8, padding: "20px 22px", display: "flex", flexDirection: "column",
+    gap: 8, minHeight: 180, border: "1px solid",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
+    transition: "all 0.2s ease",
   },
-  expenseCard: { background: "#110e0e", borderColor: "#2a1a1a" },
-  incomeCard: { background: "#0b110e", borderColor: "#1a2a1e" },
-  summaryLabel: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#555" },
-  summaryAmount: { fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: "#e5e5e5", marginBottom: 8 },
-  entryList: { display: "flex", flexDirection: "column", gap: 3, overflowY: "auto", maxHeight: 160 },
-  entryRow: { display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "#888" },
-  entryCategory: { color: "#666", fontSize: 11 },
-  entryAmt: { color: "#f87171", fontVariantNumeric: "tabular-nums" },
-  empty: { fontSize: 11, color: "#333" },
+  expenseCard: { background: "#1a0f0f", borderColor: "#3a2020", boxShadow: "0 4px 12px rgba(248, 113, 113, 0.05)" },
+  incomeCard: { background: "#0f1a12", borderColor: "#203a28", boxShadow: "0 4px 12px rgba(74, 222, 128, 0.05)" },
+  summaryLabel: { fontSize: 9, letterSpacing: "0.25em", textTransform: "uppercase", color: "#777", fontWeight: 500 },
+  summaryAmount: { fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", color: "#f5f5f5", marginBottom: 10 },
+  entryList: { display: "flex", flexDirection: "column", gap: 6, overflowY: "auto", maxHeight: 180 },
+  entryRow: { display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "#999", padding: "4px 0" },
+  entryCategory: { color: "#777", fontSize: 11, fontWeight: 500 },
+  entryAmt: { color: "#f87171", fontVariantNumeric: "tabular-nums", fontWeight: 600 },
+  empty: { fontSize: 11, color: "#444", fontStyle: "italic" },
   form: {
-    width: "100%", maxWidth: 680, background: "#111", border: "1px solid #1e1e1e",
-    borderRadius: 2, padding: "24px", display: "flex", flexDirection: "column", gap: 20,
+    width: "100%", maxWidth: 680, background: "#1a1a1a", border: "1px solid #2a2a2a",
+    borderRadius: 8, padding: "28px", display: "flex", flexDirection: "column", gap: 24,
+    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)",
   },
   toggle: {
-    display: "flex", gap: 0, background: "#0a0a0a", border: "1px solid #1e1e1e",
-    borderRadius: 2, overflow: "hidden", width: "fit-content",
+    display: "flex", gap: 0, background: "#0a0a0a", border: "1px solid #2a2a2a",
+    borderRadius: 6, overflow: "hidden", width: "fit-content",
   },
   toggleBtn: {
-    background: "transparent", border: "none", color: "#555", fontSize: 12,
-    letterSpacing: "0.1em", textTransform: "uppercase", padding: "8px 20px",
-    cursor: "pointer", transition: "all 0.15s",
+    background: "transparent", border: "none", color: "#777", fontSize: 11,
+    letterSpacing: "0.1em", textTransform: "uppercase", padding: "10px 22px",
+    cursor: "pointer", transition: "all 0.2s ease", fontWeight: 600,
   },
-  toggleActive: { background: "#2a1a1a", color: "#f87171" },
-  toggleActiveIncome: { background: "#1a2a1e", color: "#4ade80" },
-  inputGroup: { display: "flex", flexDirection: "column", gap: 8 },
-  label: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#555" },
+  toggleActive: { background: "#3a2020", color: "#f87171", boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.3)" },
+  toggleActiveIncome: { background: "#203a28", color: "#4ade80", boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.3)" },
+  inputGroup: { display: "flex", flexDirection: "column", gap: 10 },
+  label: { fontSize: 9, letterSpacing: "0.25em", textTransform: "uppercase", color: "#777", fontWeight: 500 },
   input: {
-    background: "#0a0a0a", border: "1px solid #222", borderRadius: 2, color: "#e5e5e5",
-    fontSize: 28, fontFamily: "inherit", fontWeight: 700, padding: "10px 14px",
+    background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 6, color: "#e5e5e5",
+    fontSize: 28, fontFamily: "inherit", fontWeight: 700, padding: "12px 16px",
     outline: "none", width: "100%", boxSizing: "border-box", letterSpacing: "-0.02em",
+    transition: "all 0.2s ease",
   },
-  inputError: { border: "1px solid #7f1d1d" },
-  errorText: { fontSize: 11, color: "#f87171", letterSpacing: "0.05em", marginTop: 2 },
+  inputError: { border: "1px solid #9f2825", boxShadow: "0 0 8px rgba(248, 113, 113, 0.2)" },
+  errorText: { fontSize: 10, color: "#f87171", letterSpacing: "0.05em", marginTop: 4, fontWeight: 500 },
   customInput: {
-    marginTop: 8, background: "#0a0a0a", border: "1px solid #333", borderRadius: 2,
-    color: "#e5e5e5", fontSize: 13, fontFamily: "inherit", padding: "8px 12px",
+    marginTop: 8, background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 6,
+    color: "#e5e5e5", fontSize: 13, fontFamily: "inherit", padding: "10px 14px",
     outline: "none", width: "100%", boxSizing: "border-box", letterSpacing: "0.02em",
+    transition: "all 0.2s ease",
   },
-  chips: { display: "flex", flexWrap: "wrap", gap: 6 },
+  chips: { display: "flex", flexWrap: "wrap", gap: 8 },
   chip: {
-    background: "transparent", border: "1px solid #222", borderRadius: 2, color: "#666",
-    fontSize: 11, letterSpacing: "0.05em", padding: "5px 12px", cursor: "pointer", transition: "all 0.1s",
+    background: "transparent", border: "1px solid #2a2a2a", borderRadius: 6, color: "#777",
+    fontSize: 11, letterSpacing: "0.05em", padding: "6px 14px", cursor: "pointer", transition: "all 0.2s ease",
+    fontWeight: 500,
   },
-  chipActive: { border: "1px solid #555", color: "#e5e5e5", background: "#1a1a1a" },
+  chipActive: { border: "1px solid #666", color: "#f5f5f5", background: "#2a2a2a", boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)" },
   submitBtn: {
-    background: "#e5e5e5", color: "#0a0a0a", border: "none", borderRadius: 2,
-    fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase",
-    fontFamily: "inherit", fontWeight: 700, padding: "14px", cursor: "pointer", transition: "opacity 0.15s",
+    background: "#e5e5e5", color: "#0a0a0a", border: "none", borderRadius: 6,
+    fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase",
+    fontFamily: "inherit", fontWeight: 700, padding: "13px 20px", cursor: "pointer",
+    transition: "all 0.2s ease", boxShadow: "0 4px 12px rgba(229, 229, 229, 0.15)",
   },
   balance: {
     width: "100%", maxWidth: 680, display: "flex", justifyContent: "space-between",
-    alignItems: "baseline", padding: "0 2px",
+    alignItems: "baseline", padding: "20px 0 0", borderTop: "1px solid #2a2a2a",
   },
-  balanceLabel: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#555" },
-  balanceValue: { fontSize: 32, fontWeight: 700, letterSpacing: "-0.03em" },
+  balanceLabel: { fontSize: 9, letterSpacing: "0.25em", textTransform: "uppercase", color: "#777", fontWeight: 500 },
+  balanceValue: { fontSize: 36, fontWeight: 700, letterSpacing: "-0.03em", marginTop: 8 },
 };
